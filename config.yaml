@@ -1,0 +1,120 @@
+# env
+env: reacher_hard  # option: reacher_hard, hopper_hop, cheetah_run
+horizon: 5
+frame_stack: 3
+action_repeat: 2
+# train
+num_train_steps: 1000000  # default: 1M total true env steps
+num_expl_steps: 200000  # default: 500k task-agnostic steps
+num_random_steps: 1000
+replay_buffer_capacity: 100000
+seed: 1
+# eval
+eval_frequency: 50000
+num_eval_episodes: 10
+# misc
+log_frequency_step: 1000
+log_save_tb: true
+save_video: true
+save_model: true
+save_buffer: false
+save_pixels: false
+save_frequency: 100000
+device: cuda
+
+load_pretrained: false
+pretrained_step: 250000
+pretrained_dir: none
+
+
+agent:
+  class: proto.ProtoAgent
+  name: proto_rl
+  params:
+    obs_shape: ??? # to be specified later
+    action_shape: ??? # to be specified later
+    action_range: ??? # to be specified later
+    device: ${device}
+    encoder_cfg: ${encoder}
+    trans_dyn_cfg: ${trans_dyn}
+    critic_cfg: ${critic}
+    actor_cfg: ${actor}
+    proto_cfg: ${proto}
+    discount: 0.99
+    init_temperature: 0.1
+    lr: 1e-4
+    actor_update_frequency: 2
+    critic_target_tau: 0.01
+    critic_target_update_frequency: 2
+    encoder_target_tau: 0.05
+    encoder_update_frequency: 2
+    batch_size: 512
+    task_agnostic: ???
+    intr_coef: 0.2
+    trans_coef: 500
+    num_seed_steps: 1000
+    
+critic:
+  class: proto.Critic
+  params:
+    repr_dim: ???
+    feature_dim: 50
+    action_shape: ${agent.params.action_shape}
+    hidden_dim: 1024
+    hidden_depth: 2
+    
+actor:
+  class: proto.Actor
+  params:
+    repr_dim: ???
+    feature_dim: 50
+    action_shape: ${agent.params.action_shape}
+    hidden_depth: 2
+    hidden_dim: 1024
+    log_std_bounds: [-10, 2]
+    
+encoder:
+  class: proto.Encoder
+  params:
+      obs_shape: ${agent.params.obs_shape}
+      repr_dim: 512 # 39200  # 32*35*35
+      proj_dim: 128
+
+trans_dyn:
+  class: proto.TransitionDynamics
+  params:
+    input_shape: ${encoder.params.repr_dim}
+    action_shape: ${agent.params.action_shape}
+    hidden_shapes: [512]
+    output_shape: ${encoder.params.repr_dim}
+    use_rnn: true
+
+proto:
+  class: proto.Proto
+  params:
+      proj_dim: ${encoder.params.proj_dim}
+      pred_dim: 512
+      T: 0.1
+      num_protos: 512
+      num_iters: 3
+      topk: 3
+      queue_size: 2048
+
+wandb:
+  use: online # online, offline, false
+  project: proto-yongjae
+  entity: ai707-group8
+  run_name: ${env}/${now:%Y.%m.%d}/${now:%H%M%S}
+  feat: none  # none or feature name
+
+# hydra configuration
+experiment: bench
+
+hydra:
+  name: ${env}
+  run:
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M%S}_${experiment}
+    subdir: ${hydra.job.num}
+

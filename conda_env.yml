@@ -1,0 +1,29 @@
+name: proto
+channels:
+  - defaults
+dependencies:
+#  - python=3.7
+#  - pytorch=1.7.1
+#  - cudatoolkit=11.0.3
+  - absl-py
+  - pyparsing
+  - jupyterlab
+  - scikit-image
+  - pip:
+    - torch
+    - termcolor
+    - git+https://github.com/google-deepmind/dm_control.git
+    - tb-nightly
+    - imageio
+    - imageio-ffmpeg
+    - git+https://github.com/facebookresearch/hydra.git@0.11_branch
+    - pandas
+    - ipdb
+    - tqdm
+    - torchvision
+    - yapf
+    - mujoco_py
+    - scikit-learn
+    - matplotlib
+    - kornia
+    - gym
